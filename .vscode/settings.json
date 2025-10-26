@@ -1,0 +1,16 @@
+{
+    "yaml.customTags": [
+        "!input",
+        "!include",
+        "!include_dir_list",
+        "!include_dir_merge_list",
+        "!include_dir_merge_named",
+        "!include_dir_named",
+        "!secret"
+    ],
+    "yaml.validate": false,
+    "files.associations": {
+        "*.yaml": "yaml",
+        "*.yml": "yaml"
+    }
+}
