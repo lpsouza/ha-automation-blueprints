@@ -1,0 +1,77 @@
+blueprint:
+  name: Smart Motion Lighting - DND Override
+  description: >
+    Intelligently manages the Master Control Input Boolean for motion-based automation systems.
+    Enables "Do Not Disturb" mode when lights are manually turned OFF while motion is detected,
+    and re-enables "Auto Mode" when lights are manually turned ON.
+
+    COMPANION BLUEPRINT: Designed to work with "Smart Motion Lighting - Main Controller" 
+    (motion_light_control.yaml) to create a complete smart lighting system with manual override capability.
+
+    WORKFLOW: Light manually ON → Auto Mode enabled | Light manually OFF (with motion) → DND Mode enabled
+  domain: automation
+  source_url: https://github.com/lpsouza/ha-automation-blueprints/dnd_override.yaml
+
+  input:
+    target_light_switch:
+      name: Target Light/Switch (Trigger)
+      description: The light or switch entity that is being manually controlled by the user.
+      selector:
+        entity:
+          domain: [light, switch]
+
+    master_control_boolean:
+      name: Master Control Input Boolean (Shared with Motion Automation)
+      description: >
+        The same Input Boolean used in your motion-based lighting automation as the master control switch.
+        This blueprint will toggle this boolean ON/OFF to enable/disable the companion motion automation.
+
+        IMPORTANT: This must be the SAME entity used in the "Smart Motion Lighting - Main Controller" blueprint.
+      selector:
+        entity:
+          domain: input_boolean
+
+    motion_sensor:
+      name: Motion/Presence Sensor (Must Match Motion Automation)
+      description: >
+        The SAME motion sensor entity used in your companion motion-based lighting automation.
+        This sensor is used to detect if someone is present when manually turning OFF the lights,
+        which indicates the user wants to activate DND mode.
+
+        IMPORTANT: This must be the SAME entity used in the "Smart Motion Lighting - Main Controller" blueprint.
+      selector:
+        entity:
+          domain: binary_sensor
+
+trigger:
+  - platform: state
+    entity_id: !input target_light_switch
+
+variables:
+  target_light_switch: !input target_light_switch
+  motion_sensor: !input motion_sensor
+  master_control_boolean: !input master_control_boolean
+
+  switch_is_on: "{{ is_state(target_light_switch, 'on') }}"
+  presence_is_on: "{{ is_state(motion_sensor, 'on') }}"
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ switch_is_on }}"
+        sequence:
+          - service: input_boolean.turn_on
+            target:
+              entity_id: !input master_control_boolean
+      - conditions:
+          - condition: template
+            value_template: "{{ not switch_is_on }}"
+          - condition: template
+            value_template: "{{ presence_is_on }}"
+        sequence:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input master_control_boolean
+
+mode: single

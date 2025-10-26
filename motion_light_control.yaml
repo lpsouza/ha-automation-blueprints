@@ -1,0 +1,91 @@
+blueprint:
+  name: Smart Motion Lighting - Main Controller
+  description: >
+    Automatically turns lights ON when motion is detected and OFF after a configurable delay.
+    This automation only runs when the Master Control Input Boolean is ON (Auto Mode).
+
+    COMPANION BLUEPRINT: Works together with "Smart Motion Lighting - DND Override" 
+    (motion_light_control_dnd.yaml) which manages the Master Control Boolean state based on manual 
+    light switch usage, creating a complete Do Not Disturb (DND) system.
+
+    WORKFLOW: Motion detected → Light ON (if Auto Mode enabled) → Motion stops → Wait delay → Light OFF
+  domain: automation
+  source_url: https://github.com/lpsouza/ha-automation-blueprints/motion_light_control.yaml
+
+  input:
+    motion_sensor:
+      name: Motion/Presence Sensor
+      description: The sensor entity (e.g., binary_sensor.presenca_no_escritorio_movimento) that detects motion.
+      selector:
+        entity:
+          domain: binary_sensor
+    target_light_switch:
+      name: Target Light/Switch
+      description: The light or switch entity (e.g., switch.interruptor_do_escritorio_luz) to be controlled.
+      selector:
+        entity:
+          domain: [light, switch]
+    master_control_boolean:
+      name: Master Control Input Boolean (Auto Mode Switch)
+      description: >
+        An Input Boolean that acts as the master switch controlling this automation.
+        When ON: Automation runs normally (Auto Mode).
+        When OFF: Automation is disabled (DND Mode - Do Not Disturb).
+
+        TIP: Use the companion "Smart Motion Lighting - DND Override" blueprint to automatically 
+        manage this boolean based on manual light switch usage.
+      selector:
+        entity:
+          domain: input_boolean
+    off_delay:
+      name: Turn Off Delay
+      description: How long to wait after motion stops before turning the light off.
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: minutes
+          mode: slider
+
+trigger:
+  - platform: state
+    entity_id: !input motion_sensor
+    to: "on"
+    id: "motion_on"
+  - platform: state
+    entity_id: !input motion_sensor
+    to: "off"
+    for:
+      minutes: !input off_delay
+    id: "motion_off"
+
+condition:
+  - condition: state
+    entity_id: !input master_control_boolean
+    state: "on"
+
+variables:
+  target_light_switch: !input target_light_switch
+  switch_is_on: "{{ is_state(target_light_switch, 'on') }}"
+  trigger_id: "{{ trigger.id }}"
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger_id == 'motion_on' and not switch_is_on }}"
+        sequence:
+          - service: homeassistant.turn_on
+            target:
+              entity_id: !input target_light_switch
+          - delay: 0
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger_id == 'motion_off' and switch_is_on }}"
+        sequence:
+          - service: homeassistant.turn_off
+            target:
+              entity_id: !input target_light_switch
+          - delay: 0
+mode: single
