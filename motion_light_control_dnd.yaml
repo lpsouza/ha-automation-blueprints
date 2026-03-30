@@ -10,7 +10,7 @@ blueprint:
 
     WORKFLOW: Light manually ON → Auto Mode enabled | Light manually OFF (with motion) → DND Mode enabled
   domain: automation
-  source_url: https://github.com/lpsouza/ha-automation-blueprints/dnd_override.yaml
+  source_url: https://github.com/lpsouza/ha-automation-blueprints/motion_light_control_dnd.yaml
 
   input:
     target_light_switch:
