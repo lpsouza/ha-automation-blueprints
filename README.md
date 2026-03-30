@@ -1,6 +1,6 @@
 # Home Assistant Automation Blueprints
 
-This repository contains a collection of Home Assistant automation blueprints created to enhance and simplify your smart home experience. These blueprints are designed to work together, providing a robust motion-based lighting system with manual override (Do Not Disturb) capabilities.
+This repository provides a collection of Home Assistant automation blueprints designed to enhance and simplify your smart home experience. These templates allow you to quickly implement advanced automation logic with minimal configuration, ensuring a more intuitive and responsive environment.
 
 ## Available Blueprints
 
